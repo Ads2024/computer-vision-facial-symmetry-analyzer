@@ -328,6 +328,17 @@
             border-color: var(--primary-color);
             box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
         }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .navbar-logo {
+            height: 50px;
+            width: auto;
+        }
     </style>
 </head>
 <body>
@@ -336,7 +347,7 @@
     <nav class="navbar navbar-expand-lg navbar-light shadow-sm">
         <div class="container">
             <a class="navbar-brand" href="/">
-                <i class="fas fa-face-smile me-2"></i>
+                <img src="{{ url_for('static', filename='images/logo.gif') }}" alt="Logo" class="navbar-logo">
                 Facial Symmetry Analyzer
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
