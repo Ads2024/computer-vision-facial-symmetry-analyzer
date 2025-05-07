@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis History - Facial Symmetry Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #4f46e5;
+            --background-color: #f8fafc;
+            --card-background: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --success-color: #22c55e;
+            --error-color: #ef4444;
+        }
+
+        body {
+            background-color: var(--background-color);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-color);
+            background-color: #f1f5f9;
+        }
+
+        .nav-link.active {
+            color: var(--primary-color);
+            background-color: #f1f5f9;
+        }
+
+        .history-card {
+            background-color: var(--card-background);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .history-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .history-timestamp {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .history-score {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .action-button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .action-button:hover {
+            transform: translateY(-1px);
+        }
+
+        .compare-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+        }
+
+        .compare-button:hover {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .download-button {
+            background-color: #f1f5f9;
+            color: var(--text-primary);
+            border: none;
+        }
+
+        .download-button:hover {
+            background-color: #e2e8f0;
+            color: var(--text-primary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-face-smile me-2"></i>
+                Facial Symmetry Analyzer
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/history">
+                            <i class="fas fa-history me-1"></i>History
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/about">
+                            <i class="fas fa-info-circle me-1"></i>About
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 class="mb-4">Analysis History</h1>
+
+        {% if analyses %}
+            <div class="row">
+                {% for analysis in analyses %}
+                <div class="col-md-6">
+                    <div class="history-card" data-result-url="{{ url_for('view_result', result_id=analysis.id) }}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="mb-2">{{ analysis.filename }}</h5>
+                                <div class="history-timestamp">
+                                    {{ analysis.timestamp }}
+                                </div>
+                            </div>
+                            <div class="history-score">
+                                {{ "%.4f"|format(analysis.total_score) }}
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <a href="{{ url_for('download_results', result_id=analysis.id) }}" 
+                               class="btn action-button download-button"
+                               onclick="event.stopPropagation()">
+                                <i class="fas fa-download"></i>Download
+                            </a>
+                            <button class="btn action-button compare-button"
+                                    onclick="event.stopPropagation(); selectForComparison('{{ analysis.id }}')">
+                                <i class="fas fa-code-compare"></i>Compare
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-history"></i>
+                <h3>No Analysis History</h3>
+                <p>Upload an image to start analyzing facial symmetry</p>
+                <a href="/" class="btn btn-primary mt-3">
+                    <i class="fas fa-upload me-2"></i>Upload Image
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let selectedAnalysis = null;
+
+        // Add click event listeners to history cards
+        document.querySelectorAll('.history-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                // Don't navigate if clicking on action buttons
+                if (!e.target.closest('.action-buttons')) {
+                    window.location.href = this.dataset.resultUrl;
+                }
+            });
+        });
+
+        function selectForComparison(analysisId) {
+            if (selectedAnalysis === null) {
+                selectedAnalysis = analysisId;
+                // Show some visual feedback that this analysis is selected
+                event.target.closest('.history-card').style.border = '2px solid var(--primary-color)';
+            } else {
+                // Navigate to comparison page
+                window.location.href = `/compare?result1=${selectedAnalysis}&result2=${analysisId}`;
+            }
+        }
+    </script>
+</body>
+</html> 
