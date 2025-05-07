@@ -10,43 +10,60 @@
         :root {
             --primary-color: #6366f1;
             --secondary-color: #4f46e5;
-            --background-color: #f8fafc;
-            --card-background: #ffffff;
+            --background-color: rgba(248, 250, 252, 0.9);
+            --card-background: rgba(255, 255, 255, 0.95);
             --text-primary: #1e293b;
             --text-secondary: #64748b;
             --success-color: #22c55e;
             --error-color: #ef4444;
         }
 
+        #particles-js {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        }
+
         body {
-            background-color: var(--background-color);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             color: var(--text-primary);
             line-height: 1.6;
+            min-height: 100vh;
         }
 
         .container {
             max-width: 1200px;
             margin: 2rem auto;
             padding: 0 1rem;
+            position: relative;
+            z-index: 1;
         }
 
-        .nav-link {
-            color: var(--text-secondary);
-            font-weight: 500;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            transition: all 0.3s ease;
+        .navbar {
+            background-color: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
         }
 
-        .nav-link:hover {
-            color: var(--primary-color);
-            background-color: #f1f5f9;
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: white;
         }
 
-        .nav-link.active {
-            color: var(--primary-color);
-            background-color: #f1f5f9;
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
         }
 
         .history-card {
@@ -57,6 +74,7 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             transition: transform 0.3s ease;
             cursor: pointer;
+            backdrop-filter: blur(10px);
         }
 
         .history-card:hover {
@@ -119,13 +137,27 @@
         .empty-state {
             text-align: center;
             padding: 3rem;
-            color: var(--text-secondary);
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            backdrop-filter: blur(10px);
         }
 
         .empty-state i {
             font-size: 3rem;
             margin-bottom: 1rem;
-            color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: rgba(239, 68, 68, 0.9);
+            border: none;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-danger:hover {
+            background-color: rgba(220, 38, 38, 0.9);
+            transform: translateY(-1px);
         }
     </style>
 </head>
@@ -162,7 +194,13 @@
     </nav>
 
     <div class="container">
-        <h1 class="mb-4">Analysis History</h1>
+        <div class="header">
+            <h1>Analysis History</h1>
+            <p>View and compare your previous facial symmetry analyses</p>
+            <button class="btn btn-danger" onclick="clearHistory()">
+                <i class="fas fa-trash-alt me-2"></i>Clear History
+            </button>
+        </div>
 
         {% if analyses %}
             <div class="row">
@@ -181,7 +219,7 @@
                             </div>
                         </div>
                         <div class="action-buttons">
-                            <a href="{{ url_for('download_results', result_id=analysis.id) }}" 
+                            <a href="{{ url_for('download_result', result_id=analysis.id) }}" 
                                class="btn action-button download-button"
                                onclick="event.stopPropagation()">
                                 <i class="fas fa-download"></i>Download
@@ -208,6 +246,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
     <script>
         let selectedAnalysis = null;
 
@@ -222,15 +261,164 @@
         });
 
         function selectForComparison(analysisId) {
-            if (selectedAnalysis === null) {
-                selectedAnalysis = analysisId;
-                // Show some visual feedback that this analysis is selected
-                event.target.closest('.history-card').style.border = '2px solid var(--primary-color)';
+            const selectedAnalyses = JSON.parse(localStorage.getItem('selectedAnalyses') || '[]');
+            const index = selectedAnalyses.indexOf(analysisId);
+            
+            if (index === -1) {
+                if (selectedAnalyses.length < 2) {
+                    selectedAnalyses.push(analysisId);
+                }
             } else {
-                // Navigate to comparison page
-                window.location.href = `/compare?result1=${selectedAnalysis}&result2=${analysisId}`;
+                selectedAnalyses.splice(index, 1);
+            }
+            
+            localStorage.setItem('selectedAnalyses', JSON.stringify(selectedAnalyses));
+            updateComparisonButton();
+        }
+
+        function updateComparisonButton() {
+            const selectedAnalyses = JSON.parse(localStorage.getItem('selectedAnalyses') || '[]');
+            const compareButton = document.getElementById('compareButton');
+            
+            if (selectedAnalyses.length === 2) {
+                compareButton.disabled = false;
+                compareButton.classList.remove('btn-secondary');
+                compareButton.classList.add('btn-primary');
+            } else {
+                compareButton.disabled = true;
+                compareButton.classList.remove('btn-primary');
+                compareButton.classList.add('btn-secondary');
             }
         }
+
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear all analysis history? This action cannot be undone.')) {
+                fetch('/api/clear-history', {
+                    method: 'POST',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error clearing history: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error clearing history. Please try again.');
+                });
+            }
+        }
+
+        // Initialize comparison button state
+        updateComparisonButton();
+
+        particlesJS("particles-js", {
+            "particles": {
+                "number": {
+                    "value": 80,
+                    "density": {
+                        "enable": true,
+                        "value_area": 800
+                    }
+                },
+                "color": {
+                    "value": "#ffffff"
+                },
+                "shape": {
+                    "type": "circle",
+                    "stroke": {
+                        "width": 0,
+                        "color": "#000000"
+                    },
+                    "polygon": {
+                        "nb_sides": 5
+                    }
+                },
+                "opacity": {
+                    "value": 0.5,
+                    "random": false,
+                    "anim": {
+                        "enable": false,
+                        "speed": 1,
+                        "opacity_min": 0.1,
+                        "sync": false
+                    }
+                },
+                "size": {
+                    "value": 3,
+                    "random": true,
+                    "anim": {
+                        "enable": false,
+                        "speed": 40,
+                        "size_min": 0.1,
+                        "sync": false
+                    }
+                },
+                "line_linked": {
+                    "enable": true,
+                    "distance": 150,
+                    "color": "#ffffff",
+                    "opacity": 0.4,
+                    "width": 1
+                },
+                "move": {
+                    "enable": true,
+                    "speed": 2,
+                    "direction": "none",
+                    "random": false,
+                    "straight": false,
+                    "out_mode": "out",
+                    "bounce": false,
+                    "attract": {
+                        "enable": false,
+                        "rotateX": 600,
+                        "rotateY": 1200
+                    }
+                }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": {
+                    "onhover": {
+                        "enable": true,
+                        "mode": "grab"
+                    },
+                    "onclick": {
+                        "enable": true,
+                        "mode": "push"
+                    },
+                    "resize": true
+                },
+                "modes": {
+                    "grab": {
+                        "distance": 140,
+                        "line_linked": {
+                            "opacity": 1
+                        }
+                    },
+                    "bubble": {
+                        "distance": 400,
+                        "size": 40,
+                        "duration": 2,
+                        "opacity": 8,
+                        "speed": 3
+                    },
+                    "repulse": {
+                        "distance": 200,
+                        "duration": 0.4
+                    },
+                    "push": {
+                        "particles_nb": 4
+                    },
+                    "remove": {
+                        "particles_nb": 2
+                    }
+                }
+            },
+            "retina_detect": true
+        });
     </script>
 </body>
 </html> 

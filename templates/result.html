@@ -10,25 +10,42 @@
         :root {
             --primary-color: #6366f1;
             --secondary-color: #4f46e5;
-            --background-color: #f8fafc;
-            --card-background: #ffffff;
+            --background-color: rgba(248, 250, 252, 0.9);
+            --card-background: rgba(255, 255, 255, 0.95);
             --text-primary: #1e293b;
             --text-secondary: #64748b;
             --success-color: #22c55e;
             --error-color: #ef4444;
         }
 
+        #particles-js {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        }
+
         body {
-            background-color: var(--background-color);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             color: var(--text-primary);
             line-height: 1.6;
+            min-height: 100vh;
         }
 
         .container {
             max-width: 1200px;
             margin: 2rem auto;
             padding: 0 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .navbar {
+            background-color: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
         }
 
         .nav-link {
@@ -41,12 +58,12 @@
 
         .nav-link:hover {
             color: var(--primary-color);
-            background-color: #f1f5f9;
+            background-color: rgba(241, 245, 249, 0.8);
         }
 
         .nav-link.active {
             color: var(--primary-color);
-            background-color: #f1f5f9;
+            background-color: rgba(241, 245, 249, 0.8);
         }
 
         .result-card {
@@ -55,6 +72,7 @@
             padding: 1.5rem;
             margin-bottom: 1.5rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            backdrop-filter: blur(10px);
         }
 
         .score-value {
@@ -70,13 +88,13 @@
             align-items: center;
             padding: 0.75rem;
             border-radius: 0.5rem;
-            background-color: #f8fafc;
+            background-color: rgba(248, 250, 252, 0.8);
             margin-bottom: 0.5rem;
             transition: background-color 0.3s ease;
         }
 
         .zone-score:hover {
-            background-color: #f1f5f9;
+            background-color: rgba(241, 245, 249, 0.9);
         }
 
         .zone-name {
@@ -93,6 +111,7 @@
             border-radius: 0.5rem;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             margin-bottom: 1rem;
+            background-color: white;
         }
 
         .action-buttons {
@@ -127,13 +146,13 @@
         }
 
         .compare-button {
-            background-color: #f1f5f9;
+            background-color: rgba(241, 245, 249, 0.8);
             color: var(--text-primary);
             border: none;
         }
 
         .compare-button:hover {
-            background-color: #e2e8f0;
+            background-color: rgba(226, 232, 240, 0.9);
             color: var(--text-primary);
         }
 
@@ -145,7 +164,9 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div id="particles-js"></div>
+    
+    <nav class="navbar navbar-expand-lg navbar-light shadow-sm">
         <div class="container">
             <a class="navbar-brand" href="/">
                 <i class="fas fa-face-smile me-2"></i>
@@ -198,7 +219,7 @@
                     {% endfor %}
 
                     <div class="action-buttons">
-                        <a href="{{ url_for('download_results', result_id=result_id) }}" class="btn action-button download-button">
+                        <a href="{{ url_for('download_result', result_id=result_id) }}" class="btn action-button download-button">
                             <i class="fas fa-download"></i>Download Results
                         </a>
                         <a href="{{ url_for('history') }}" class="btn action-button compare-button">
@@ -227,5 +248,113 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        particlesJS("particles-js", {
+            "particles": {
+                "number": {
+                    "value": 80,
+                    "density": {
+                        "enable": true,
+                        "value_area": 800
+                    }
+                },
+                "color": {
+                    "value": "#ffffff"
+                },
+                "shape": {
+                    "type": "circle",
+                    "stroke": {
+                        "width": 0,
+                        "color": "#000000"
+                    },
+                    "polygon": {
+                        "nb_sides": 5
+                    }
+                },
+                "opacity": {
+                    "value": 0.5,
+                    "random": false,
+                    "anim": {
+                        "enable": false,
+                        "speed": 1,
+                        "opacity_min": 0.1,
+                        "sync": false
+                    }
+                },
+                "size": {
+                    "value": 3,
+                    "random": true,
+                    "anim": {
+                        "enable": false,
+                        "speed": 40,
+                        "size_min": 0.1,
+                        "sync": false
+                    }
+                },
+                "line_linked": {
+                    "enable": true,
+                    "distance": 150,
+                    "color": "#ffffff",
+                    "opacity": 0.4,
+                    "width": 1
+                },
+                "move": {
+                    "enable": true,
+                    "speed": 2,
+                    "direction": "none",
+                    "random": false,
+                    "straight": false,
+                    "out_mode": "out",
+                    "bounce": false,
+                    "attract": {
+                        "enable": false,
+                        "rotateX": 600,
+                        "rotateY": 1200
+                    }
+                }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": {
+                    "onhover": {
+                        "enable": true,
+                        "mode": "grab"
+                    },
+                    "onclick": {
+                        "enable": true,
+                        "mode": "push"
+                    },
+                    "resize": true
+                },
+                "modes": {
+                    "grab": {
+                        "distance": 140,
+                        "line_linked": {
+                            "opacity": 1
+                        }
+                    },
+                    "bubble": {
+                        "distance": 400,
+                        "size": 40,
+                        "duration": 2,
+                        "opacity": 8,
+                        "speed": 3
+                    },
+                    "repulse": {
+                        "distance": 200,
+                        "duration": 0.4
+                    },
+                    "push": {
+                        "particles_nb": 4
+                    },
+                    "remove": {
+                        "particles_nb": 2
+                    }
+                }
+            },
+            "retina_detect": true
+        });
+    </script>
 </body>
 </html> 

@@ -47,88 +47,112 @@ class FacialSymmetryAnalyzer:
         """
         Analyze facial symmetry in an image.
         """
-        # Load and check image
-        img = cv2.imread(image_path)
-        if img is None:
-            raise ValueError(f"Could not load image at {image_path}")
-        
-        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        h, w, _ = img.shape
-        
-        # Process with MediaPipe
-        results = self.face_mesh.process(img_rgb)
-        
-        if not results.multi_face_landmarks:
-            raise ValueError("No face detected in the image")
-        
-        # Extract landmark coordinates
-        landmarks = results.multi_face_landmarks[0].landmark
-        points = np.array([[int(p.x * w), int(p.y * h)] for p in landmarks])
-        
-        # Calculate face dimensions for normalization
-        face_height = abs(np.mean([points[10][1], points[152][1]]) - 
-                         np.mean([points[8][1], points[168][1]]))
-        face_width = abs(points[234][0] - points[454][0])
-        
-        # Align face upright based on eye positions
-        aligned_img, aligned_points, mid_x = self._align_face(img, points)
-        
-        # Calculate symmetry scores
-        zone_scores, all_landmarks_scores, asymmetry_map = self._calculate_symmetry(
-            aligned_points, mid_x, face_width, face_height, h, w
-        )
-        
-        # Calculate final symmetry score
-        if use_perceptual_weights:
-            final_score = sum(zone_scores[zone] * self.perceptual_weights[zone] 
-                            for zone in zone_scores) / sum(self.perceptual_weights.values())
-        else:
-            final_score = np.mean([score for score in zone_scores.values()])
-        
-        # Sort landmarks by asymmetry
-        sorted_asym = sorted(all_landmarks_scores, key=lambda x: x[3], reverse=True)
-        
-        # Create visualization
-        fig = self._create_visualization(aligned_img, aligned_points, mid_x, asymmetry_map, 
-                                       zone_scores, final_score, use_perceptual_weights)
-        
-        # Save visualization to buffer
-        buf = io.BytesIO()
-        fig.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.1)
-        buf.seek(0)
-        plt.close(fig)
-        
-        # Create mirrored versions
-        left_half = aligned_img[:, :mid_x]
-        right_half = aligned_img[:, mid_x:]
-        mirrored_left = cv2.flip(left_half, 1)
-        mirrored_right = cv2.flip(right_half, 1)
-        
-        # Ensure mirrored halves have the same width
-        if mirrored_left.shape[1] != right_half.shape[1]:
-            mirrored_left = cv2.resize(mirrored_left, (right_half.shape[1], right_half.shape[0]))
-        if mirrored_right.shape[1] != left_half.shape[1]:
-            mirrored_right = cv2.resize(mirrored_right, (left_half.shape[1], left_half.shape[0]))
-        
-        # Create mirrored images
-        left_mirror = np.zeros_like(aligned_img)
-        right_mirror = np.zeros_like(aligned_img)
-        left_mirror[:, :mid_x] = aligned_img[:, :mid_x]
-        left_mirror[:, mid_x:] = mirrored_left
-        right_mirror[:, :mid_x] = mirrored_right
-        right_mirror[:, mid_x:] = aligned_img[:, mid_x:]
-        
-        # Prepare results
-        results = {
-            "total_score": final_score,
-            "zone_scores": zone_scores,
-            "top_asymmetrical": sorted_asym[:5],
-            "visualization": cv2.imdecode(np.frombuffer(buf.getvalue(), np.uint8), cv2.IMREAD_COLOR),
-            "left_mirror": left_mirror,
-            "right_mirror": right_mirror
-        }
-        
-        return results
+        try:
+            # Load and check image
+            img = cv2.imread(image_path)
+            if img is None:
+                raise ValueError(f"Could not load image at {image_path}")
+            
+            if img.size == 0:
+                raise ValueError("Image is empty")
+            
+            print(f"Image loaded successfully. Shape: {img.shape}")
+            
+            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            h, w, _ = img.shape
+            
+            # Process with MediaPipe
+            results = self.face_mesh.process(img_rgb)
+            
+            if not results.multi_face_landmarks:
+                raise ValueError("No face detected in the image")
+            
+            print("Face detected successfully")
+            
+            # Extract landmark coordinates
+            landmarks = results.multi_face_landmarks[0].landmark
+            points = np.array([[int(p.x * w), int(p.y * h)] for p in landmarks])
+            
+            # Calculate face dimensions for normalization
+            face_height = abs(np.mean([points[10][1], points[152][1]]) - 
+                            np.mean([points[8][1], points[168][1]]))
+            face_width = abs(points[234][0] - points[454][0])
+            
+            if face_height <= 0 or face_width <= 0:
+                raise ValueError("Invalid face dimensions detected")
+            
+            print(f"Face dimensions calculated. Height: {face_height}, Width: {face_width}")
+            
+            # Align face upright based on eye positions
+            aligned_img, aligned_points, mid_x = self._align_face(img, points)
+            print("Face aligned successfully")
+            
+            # Calculate symmetry scores
+            zone_scores, all_landmarks_scores, asymmetry_map = self._calculate_symmetry(
+                aligned_points, mid_x, face_width, face_height, h, w
+            )
+            print("Symmetry scores calculated")
+            
+            # Calculate final symmetry score
+            if use_perceptual_weights:
+                final_score = sum(zone_scores[zone] * self.perceptual_weights[zone] 
+                                for zone in zone_scores) / sum(self.perceptual_weights.values())
+            else:
+                final_score = np.mean([score for score in zone_scores.values()])
+            
+            print(f"Final symmetry score: {final_score}")
+            
+            # Sort landmarks by asymmetry
+            sorted_asym = sorted(all_landmarks_scores, key=lambda x: x[3], reverse=True)
+            
+            # Create visualization
+            fig = self._create_visualization(aligned_img, aligned_points, mid_x, asymmetry_map, 
+                                           zone_scores, final_score, use_perceptual_weights)
+            print("Visualization created")
+            
+            # Save visualization to buffer
+            buf = io.BytesIO()
+            fig.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.1)
+            buf.seek(0)
+            plt.close(fig)
+            
+            # Create mirrored versions
+            left_half = aligned_img[:, :mid_x]
+            right_half = aligned_img[:, mid_x:]
+            mirrored_left = cv2.flip(left_half, 1)
+            mirrored_right = cv2.flip(right_half, 1)
+            
+            # Ensure mirrored halves have the same width
+            if mirrored_left.shape[1] != right_half.shape[1]:
+                mirrored_left = cv2.resize(mirrored_left, (right_half.shape[1], right_half.shape[0]))
+            if mirrored_right.shape[1] != left_half.shape[1]:
+                mirrored_right = cv2.resize(mirrored_right, (left_half.shape[1], left_half.shape[0]))
+            
+            # Create mirrored images
+            left_mirror = np.zeros_like(aligned_img)
+            right_mirror = np.zeros_like(aligned_img)
+            left_mirror[:, :mid_x] = aligned_img[:, :mid_x]
+            left_mirror[:, mid_x:] = mirrored_left
+            right_mirror[:, :mid_x] = mirrored_right
+            right_mirror[:, mid_x:] = aligned_img[:, mid_x:]
+            
+            print("Mirrored images created")
+            
+            # Prepare results
+            results = {
+                "total_score": final_score,
+                "zone_scores": zone_scores,
+                "top_asymmetrical": sorted_asym[:5],
+                "visualization": cv2.imdecode(np.frombuffer(buf.getvalue(), np.uint8), cv2.IMREAD_COLOR),
+                "left_mirror": left_mirror,
+                "right_mirror": right_mirror
+            }
+            
+            return results
+            
+        except Exception as e:
+            print(f"Error in analyze_image: {str(e)}")
+            raise
     
     def _align_face(self, img, points):
         """Align face upright based on eye positions"""
