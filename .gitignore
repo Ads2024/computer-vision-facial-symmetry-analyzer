@@ -35,12 +35,24 @@ ENV/
 instance/
 .webassets-cache
 
-# Uploaded files
+# Uploaded files and results
 uploads/
-*.jpg
-*.jpeg
-*.png
-*.gif
+results/
+static/results/
+
+# Image files in uploads and results
+uploads/*.jpg
+uploads/*.jpeg
+uploads/*.png
+uploads/*.gif
+results/*.jpg
+results/*.jpeg
+results/*.png
+results/*.gif
+static/results/*.jpg
+static/results/*.jpeg
+static/results/*.png
+static/results/*.gif
 
 # Logs
 *.log
